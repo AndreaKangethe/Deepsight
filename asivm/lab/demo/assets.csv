@@ -1,0 +1,7 @@
+name,ip,hostname,owner,owner_email,department,location,asset_type,criticality,exposure
+web-prod-01,10.20.0.11,web-prod-01,Amina Otieno,amina@example.org,Platform,Nairobi DC,web_server,5,internet
+web-staging,10.20.0.12,web-staging,Brian Kamau,brian@example.org,Platform,Nairobi DC,web_server,2,dmz
+db-prod-01,10.20.0.21,db-prod-01,Amina Otieno,amina@example.org,Data,Nairobi DC,database,5,internal
+app-01,10.20.0.31,app-01,Grace Wanjiru,grace@example.org,Applications,Mombasa DC,app_server,3,dmz
+file-srv,10.20.0.41,file-srv,Brian Kamau,brian@example.org,IT Operations,Nairobi DC,file_server,3,internal
+test-box,10.20.0.99,test-box,Grace Wanjiru,grace@example.org,Applications,Lab,test_box,1,internal

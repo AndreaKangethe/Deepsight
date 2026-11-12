@@ -1,0 +1,58 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: asivm
+      POSTGRES_PASSWORD: ${ASIVM_DB_PASSWORD:-asivm-dev-password}
+      POSTGRES_DB: asivm
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U asivm -d asivm"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [asivm]
+
+  api:
+    build: .
+    image: asivm:latest
+    depends_on:
+      db: {condition: service_healthy}
+    environment:
+      ASIVM_DATABASE_URL: postgresql+psycopg2://asivm:${ASIVM_DB_PASSWORD:-asivm-dev-password}@db:5432/asivm
+      ASIVM_SECRET_KEY: ${ASIVM_SECRET_KEY:-change-me-in-production}
+      ASIVM_NVD_API_KEY: ${ASIVM_NVD_API_KEY:-}
+      ASIVM_AUTO_INTEL_SYNC: ${ASIVM_AUTO_INTEL_SYNC:-false}
+    volumes: [models:/data/models]
+    ports: ["8000:8000"]
+    restart: unless-stopped
+    networks: [asivm]
+
+  # Live-scan lab: docker compose --profile lab up -d --build
+  # Then in ASIVM: Scope -> allow 172.28.0.0/24 and deny 172.28.0.128/25 (the platform's own containers),
+  # then Scans -> target 172.28.0.16/28 (finds .21 and .22 only).
+  # Mid-demo, a new host: docker compose --profile lab-change up -d lab-newhost   (172.28.0.23)
+  lab-apache:
+    profiles: [lab]
+    image: httpd:2.4.49          # CVE-2021-41773 / CVE-2021-42013
+    networks: {asivm: {ipv4_address: 172.28.0.21}}
+  lab-nginx:
+    profiles: [lab]
+    image: nginx:1.18.0          # CVE-2021-23017
+    networks: {asivm: {ipv4_address: 172.28.0.22}}
+
+  lab-newhost:
+    profiles: [lab-change]
+    image: httpd:2.4.50          # CVE-2021-42013; appears on the network after the first scan
+    networks: {asivm: {ipv4_address: 172.28.0.23}}
+
+volumes:
+  pgdata:
+  models:
+
+networks:
+  asivm:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
+          ip_range: 172.28.0.128/25
